@@ -1,79 +1,84 @@
 import React, { useState, useEffect } from 'react';
 import {
   TrendingUp,
-  DollarSign,
-  Droplet,
-  Store,
-  CreditCard,
+  Droplets,
+  Truck,
+  RotateCcw,
   Banknote,
-  Receipt,
+  CreditCard,
+  CheckCircle2,
+  AlertTriangle,
   Clock,
-  Sparkles,
-  ArrowUpRight,
   Activity,
-  Users,
+  ArrowRight,
+  ShieldCheck,
+  Calendar,
 } from 'lucide-react';
-import { Sale, AttendanceRecord, Employee } from '../../types';
+import { DeliveryRoute, Employee, Sale } from '../../types';
 import { StorageService } from '../../services/storage';
 
-export const LiveMonitoring: React.FC = () => {
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+interface Props {
+  onSelectLiquidateDriver?: (routeId: string) => void;
+}
+
+export const LiveMonitoring: React.FC<Props> = ({ onSelectLiquidateDriver }) => {
+  const [routes, setRoutes] = useState<DeliveryRoute[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
 
   useEffect(() => {
     loadData();
     const handleUpdate = () => loadData();
-    window.addEventListener('purificadora_data_change', handleUpdate);
-    return () => window.removeEventListener('purificadora_data_change', handleUpdate);
+    window.addEventListener('sanmiguel_data_change', handleUpdate);
+    return () => window.removeEventListener('sanmiguel_data_change', handleUpdate);
   }, []);
 
   const loadData = () => {
     const todayStr = new Date().toISOString().split('T')[0];
-    const allSales = StorageService.getSales();
-    const todaySales = allSales.filter((s) => s.timestamp.startsWith(todayStr));
-    setSales(todaySales);
-    setAttendance(StorageService.getAttendance().filter((a) => a.date === todayStr));
-    setEmployees(StorageService.getEmployees().filter((e) => e.isActive));
+    const allRoutes = StorageService.getRoutes().filter((r) => r.date === todayStr);
+    setRoutes(allRoutes);
+
+    const emps = StorageService.getEmployees().filter((e) => e.isActive && e.role === 'repartidor');
+    setEmployees(emps);
+
+    const allSales = StorageService.getSales().filter(
+      (s) => s.timestamp.startsWith(todayStr) && s.status === 'completada'
+    );
+    setSales(allSales);
   };
 
-  const totalRevenue = sales.reduce((sum, s) => sum + s.total, 0);
-  const totalCash = sales
+  // Fleet Totals
+  const totalFleetRevenue = sales.reduce((sum, s) => sum + s.total, 0);
+  const totalFleetCash = sales
     .filter((s) => s.paymentMethod === 'efectivo')
     .reduce((sum, s) => sum + s.total, 0);
-  const totalTransfer = sales
+  const totalFleetTransfer = sales
     .filter((s) => s.paymentMethod === 'transferencia')
     .reduce((sum, s) => sum + s.total, 0);
 
-  const purificadoraRevenue = sales
-    .filter((s) => s.area === 'purificadora')
-    .reduce((sum, s) => sum + s.total, 0);
-  const tiendaRevenue = sales
-    .filter((s) => s.area === 'tienda')
-    .reduce((sum, s) => sum + s.total, 0);
+  const totalBottlesSold = sales.reduce((sum, s) => sum + s.fullBottlesSold, 0);
+  const totalEmptyRecovered = sales.reduce((sum, s) => sum + s.emptyBottlesReceived, 0);
+  const totalEmptyOwed = sales.reduce((sum, s) => sum + s.emptyBottlesOwed, 0);
 
-  const totalGarrafones = sales.reduce((count, s) => {
-    const garrafonItems = s.items.filter((i) => i.productName.toLowerCase().includes('garraf'));
-    return count + garrafonItems.reduce((acc, item) => acc + item.quantity, 0);
-  }, 0);
-
-  const activeWorkersCount = attendance.filter((a) => !a.checkOut).length;
+  const activeRoutesCount = routes.filter((r) => r.status === 'en_ruta').length;
+  const pendingLiquidationCount = routes.filter((r) => r.status === 'pendiente_liquidacion').length;
+  const settledRoutesCount = routes.filter((r) => r.status === 'liquidada').length;
 
   return (
     <div className="w-full max-w-7xl mx-auto p-2.5 sm:p-6 space-y-4 sm:space-y-6 overflow-hidden">
-      {/* Live Status Header for Phone / Desktop */}
-      <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-indigo-800 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg relative overflow-hidden">
+      {/* Top Banner: Monitoreo en Vivo 24/7 */}
+      <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-blue-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-sky-100 text-xs font-bold backdrop-blur-xs mb-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>MONITOREO REMOTO EN VIVO (24/7)</span>
+              <span>MONITOREO REMOTO DE RUTAS EN VIVO</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-              Ingresos y Operaciones del Día
+              Flotilla Agua San Miguel
             </h1>
             <p className="text-xs sm:text-sm text-sky-100/90 mt-1">
-              Consulta en tiempo real de ventas, garrafones despachados y personal activo.
+              Consulta en tiempo real de garrafones vendidos, envases recuperados y dinero cobrado por cada chofer.
             </p>
           </div>
 
@@ -82,239 +87,258 @@ export const LiveMonitoring: React.FC = () => {
               Ventas Totales Hoy
             </span>
             <div className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              ${totalRevenue.toFixed(2)}
+              ${totalFleetRevenue.toFixed(2)}
             </div>
             <span className="text-[11px] text-emerald-300 font-semibold flex items-center justify-center sm:justify-end gap-1 mt-0.5">
-              <Activity className="w-3 h-3 animate-pulse" /> {sales.length} transacciones registradas
+              <Activity className="w-3 h-3 animate-pulse" /> {sales.length} entregas realizadas
             </span>
           </div>
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Garrafones KPI */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition">
+      {/* Fleet KPIs Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        {/* Garrafones Despachados */}
+        <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Garrafones
+              Garrafones Vendidos
             </span>
-            <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-              <Droplet className="w-5 h-5" />
-            </div>
+            <Droplets className="w-5 h-5 text-sky-600" />
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-sky-700">
-            {totalGarrafones}
+          <div className="text-2xl sm:text-3xl font-black text-slate-900">
+            {totalBottlesSold}
           </div>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            Rellenos y nuevos despachados
-          </p>
+          <span className="text-[11px] text-sky-600 font-medium block mt-1">
+            despachados en ruta hoy
+          </span>
         </div>
 
-        {/* Efectivo en Caja */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition">
+        {/* Envases Vacíos Recolectados */}
+        <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Efectivo en Caja
+              Envases Recuperados
             </span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Banknote className="w-5 h-5" />
-            </div>
+            <RotateCcw className="w-5 h-5 text-amber-500" />
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-900">
+            {totalEmptyRecovered}
+          </div>
+          <span className="text-[11px] text-amber-700 font-medium block mt-1">
+            {totalEmptyOwed > 0 ? `⚠️ ${totalEmptyOwed} adeudos de envase` : 'balance 1 a 1 en campo'}
+          </span>
+        </div>
+
+        {/* Efectivo en Calle / Mano */}
+        <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-400 mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Efectivo a Entregar
+            </span>
+            <Banknote className="w-5 h-5 text-emerald-600" />
           </div>
           <div className="text-2xl sm:text-3xl font-black text-emerald-600">
-            ${totalCash.toFixed(2)}
+            ${totalFleetCash.toFixed(2)}
           </div>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            Dinero físico para arquear
-          </p>
+          <span className="text-[11px] text-slate-500 font-medium block mt-1">
+            dinero en mano de choferes
+          </span>
         </div>
 
-        {/* Transferencias / QR */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition">
+        {/* Transferencias Bancarias */}
+        <div className="bg-white p-4 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Transferencias
             </span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-              <CreditCard className="w-5 h-5" />
-            </div>
+            <CreditCard className="w-5 h-5 text-indigo-600" />
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-blue-600">
-            ${totalTransfer.toFixed(2)}
+          <div className="text-2xl sm:text-3xl font-black text-indigo-700">
+            ${totalFleetTransfer.toFixed(2)}
           </div>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            Ingresos a cuenta bancaria
-          </p>
-        </div>
-
-        {/* Personal en Turno */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Personal Activo
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Users className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900">
-            {activeWorkersCount}{' '}
-            <span className="text-xs font-medium text-slate-400">
-              de {employees.filter((e) => e.role === 'empleado').length} trabajadores
-            </span>
-          </div>
-          <p className="text-xs text-emerald-600 mt-1 font-bold flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Atendiendo mostrador
-          </p>
-        </div>
-      </div>
-
-      {/* Revenue Breakdown: Purificadora vs Tienda */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Purificadora Card */}
-        <div className="bg-white p-5 rounded-3xl border border-sky-200/80 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-sky-500 text-white flex items-center justify-center">
-                <Droplet className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Área Purificadora (Agua)
-                </h3>
-                <span className="text-[11px] text-slate-400">Rellenos, garrafones, hielo</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-lg font-black text-sky-700">
-                ${purificadoraRevenue.toFixed(2)}
-              </span>
-              <div className="text-[10px] text-slate-400">
-                {totalRevenue > 0
-                  ? `${Math.round((purificadoraRevenue / totalRevenue) * 100)}% del total`
-                  : '0%'}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-            <div
-              className="bg-sky-500 h-2 rounded-full transition-all duration-500"
-              style={{
-                width: `${totalRevenue > 0 ? (purificadoraRevenue / totalRevenue) * 100 : 0}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Tienda de Abarrotes Card */}
-        <div className="bg-white p-5 rounded-3xl border border-emerald-200/80 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
-                <Store className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Área Tienda de Abarrotes
-                </h3>
-                <span className="text-[11px] text-slate-400">Refrescos, botanas, básicos</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-lg font-black text-emerald-700">
-                ${tiendaRevenue.toFixed(2)}
-              </span>
-              <div className="text-[10px] text-slate-400">
-                {totalRevenue > 0
-                  ? `${Math.round((tiendaRevenue / totalRevenue) * 100)}% del total`
-                  : '0%'}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-            <div
-              className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
-              style={{
-                width: `${totalRevenue > 0 ? (tiendaRevenue / totalRevenue) * 100 : 0}%`,
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Live Sales Stream Feed */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <h3 className="text-sm font-extrabold text-slate-900">
-              Flujo de Ventas al Momento (Live Stream)
-            </h3>
-          </div>
-          <span className="text-xs text-slate-400">
-            Actualización inmediata
+          <span className="text-[11px] text-slate-500 font-medium block mt-1">
+            pagos digitales directos
           </span>
         </div>
+      </div>
 
-        {sales.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 text-xs">
-            Aún no hay transacciones registradas el día de hoy.
+      {/* Flotilla en Operación (Tarjetas Individuales por Chofer) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-slate-900">
+              Estado Individual de Unidades en Ruta
+            </h2>
+            <p className="text-xs text-slate-500">
+              {activeRoutesCount} en calle · {pendingLiquidationCount} en planta pendientes · {settledRoutesCount} liquidadas
+            </p>
           </div>
-        ) : (
-          <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
-            {sales.map((sale) => {
-              const timeStr = new Date(sale.timestamp).toLocaleTimeString('es-MX', {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
+        </div>
 
-              return (
-                <div
-                  key={sale.id}
-                  className="p-3.5 sm:p-4 hover:bg-slate-50 transition flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
-                      #{sale.ticketNumber}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+          {employees.map((driver) => {
+            const route = routes.find((r) => r.driverId === driver.id);
+            const driverSales = sales.filter((s) => s.employeeId === driver.id);
+            const driverSoldBottles = driverSales.reduce((sum, s) => sum + s.fullBottlesSold, 0);
+            const driverEmptyBottles = driverSales.reduce((sum, s) => sum + s.emptyBottlesReceived, 0);
+            const driverCash = driverSales
+              .filter((s) => s.paymentMethod === 'efectivo')
+              .reduce((sum, s) => sum + s.total, 0);
+            const driverTransfer = driverSales
+              .filter((s) => s.paymentMethod === 'transferencia')
+              .reduce((sum, s) => sum + s.total, 0);
+            const driverTotal = driverCash + driverTransfer;
+
+            const initial = route ? route.initialBottles : 0;
+            const remaining = Math.max(0, initial - driverSoldBottles);
+            const progressPercent = initial > 0 ? Math.min(100, Math.round((driverSoldBottles / initial) * 100)) : 0;
+
+            const isPending = route?.status === 'pendiente_liquidacion';
+            const isSettled = route?.status === 'liquidada';
+            const isInRoute = route?.status === 'en_ruta';
+
+            return (
+              <div
+                key={driver.id}
+                className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all ${
+                  isPending
+                    ? 'border-amber-300 ring-2 ring-amber-400/20 shadow-md'
+                    : isSettled
+                    ? 'border-emerald-200 bg-emerald-50/20'
+                    : 'border-slate-200/90 shadow-2xs hover:shadow-sm'
+                }`}
+              >
+                {/* Driver & Unit Header */}
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-black text-sm shrink-0">
+                      {driver.name.charAt(0)}
                     </div>
-                    <div>
-                      <div className="font-bold text-slate-800 text-xs sm:text-sm">
-                        {sale.items.map((i) => `${i.quantity}x ${i.productName}`).join(' • ')}
-                      </div>
-                      <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2 mt-0.5">
-                        <span className="font-semibold text-slate-700 flex items-center gap-1">
-                          👤 {sale.employeeName}
-                        </span>
-                        <span>•</span>
-                        <span className="capitalize text-slate-600">
-                          {sale.paymentMethod === 'efectivo' ? '💵 Efectivo' : '💳 Transferencia'}
-                        </span>
-                        <span>•</span>
-                        <span className="text-slate-400">{timeStr}</span>
-                      </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-slate-900 truncate">
+                        {driver.name}
+                      </h3>
+                      <p className="text-xs text-slate-500 truncate flex items-center gap-1">
+                        <Truck className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{route?.vehicleName || driver.assignedVehicleName || 'Sin unidad'}</span>
+                      </p>
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <div className="text-sm sm:text-base font-black text-slate-900">
-                      ${sale.total.toFixed(2)}
+                  {/* Status badge */}
+                  <div className="shrink-0 text-right">
+                    {isInRoute && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                        En Ruta
+                      </span>
+                    )}
+                    {isPending && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold animate-pulse">
+                        <AlertTriangle className="w-3 h-3 text-amber-600" />
+                        Por Liquidar
+                      </span>
+                    )}
+                    {isSettled && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        Liquidada
+                      </span>
+                    )}
+                    {!route && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-medium">
+                        Sin Ruta Hoy
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Route Inventory Progress */}
+                {route ? (
+                  <div className="space-y-2 mb-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 font-medium">Carga Inicial:</span>
+                      <strong className="text-slate-800">{route.initialBottles} garrafones</strong>
                     </div>
-                    <span
-                      className={`text-[10px] font-bold uppercase ${
-                        sale.area === 'purificadora' ? 'text-sky-600' : 'text-emerald-600'
-                      }`}
-                    >
-                      {sale.area}
+
+                    {/* Progress Bar */}
+                    <div>
+                      <div className="flex justify-between text-[11px] font-bold mb-1">
+                        <span className="text-sky-700">{driverSoldBottles} Vendidos ({progressPercent}%)</span>
+                        <span className="text-slate-500">{remaining} Restantes</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                        <div
+                          className="h-full bg-sky-600 transition-all duration-300"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-600 pt-1 border-t border-slate-200/60">
+                      <span>Vacíos Recuperados:</span>
+                      <strong className="text-amber-800">{driverEmptyBottles} pzas</strong>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-slate-50 rounded-2xl text-center text-xs text-slate-400 mb-3">
+                    El chofer aún no ha registrado salida de planta hoy.
+                  </div>
+                )}
+
+                {/* Dinero Cobrado */}
+                <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-100">
+                    <span className="text-[10px] font-bold uppercase text-emerald-700 block">
+                      Efectivo en Mano
+                    </span>
+                    <span className="text-base font-black text-emerald-800">
+                      ${driverCash.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-indigo-50/80 border border-indigo-100">
+                    <span className="text-[10px] font-bold uppercase text-indigo-700 block">
+                      Transferencia
+                    </span>
+                    <span className="text-base font-black text-indigo-800">
+                      ${driverTransfer.toFixed(2)}
                     </span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {/* Total Acumulado & Quick Action */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                      Cobrado Total
+                    </span>
+                    <span className="text-lg font-black text-slate-900">
+                      ${driverTotal.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {route && onSelectLiquidateDriver && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectLiquidateDriver(route.id)}
+                      className={`px-3 py-2 rounded-xl text-xs font-black transition flex items-center gap-1 active:scale-95 ${
+                        isPending
+                          ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm'
+                          : isSettled
+                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                          : 'bg-sky-50 hover:bg-sky-100 text-sky-800'
+                      }`}
+                    >
+                      <span>{isSettled ? 'Ver Corte' : 'Liquidar'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

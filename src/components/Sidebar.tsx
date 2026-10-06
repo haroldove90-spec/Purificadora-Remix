@@ -1,22 +1,20 @@
 import React from 'react';
 import {
-  ShoppingCart,
-  Clock,
-  Receipt,
   TrendingUp,
-  Users,
-  Award,
   Wallet,
-  Package,
+  RotateCcw,
+  FileCheck,
+  Users,
   Calendar,
-  LogOut,
-  Droplet,
-  Store,
+  Truck,
+  Droplets,
+  Clock,
   ChevronLeft,
   ChevronRight,
-  ShieldAlert,
+  Receipt,
+  LogOut,
 } from 'lucide-react';
-import { Role, Employee, Area } from '../types';
+import { Role, Employee } from '../types';
 
 interface Props {
   role: Role;
@@ -25,8 +23,6 @@ interface Props {
   isOpen: boolean;
   onToggle: () => void;
   currentEmployee: Employee;
-  currentArea: Area;
-  onChangeArea?: (area: Area) => void;
   onLogout: () => void;
 }
 
@@ -37,27 +33,25 @@ export const Sidebar: React.FC<Props> = ({
   isOpen,
   onToggle,
   currentEmployee,
-  currentArea,
-  onChangeArea,
   onLogout,
 }) => {
-  const employeeItems = [
-    { id: 'pos', label: 'Punto de Cobro Exprés', icon: ShoppingCart },
-    { id: 'checador', label: 'Reloj Checador (Turnos)', icon: Clock },
-    { id: 'mis_ventas', label: 'Mis Cobros del Día', icon: Receipt },
+  const driverItems = [
+    { id: 'pos', label: 'Cobro Exprés en Ruta', icon: Droplets },
+    { id: 'mis_ventas', label: 'Mi Unidad e Inventario', icon: Truck },
+    { id: 'checador', label: 'Reloj Checador', icon: Clock },
   ];
 
   const adminItems = [
     { id: 'monitoreo', label: 'Monitoreo en Tiempo Real', icon: TrendingUp },
-    { id: 'asistencia', label: 'Asistencia y Puntualidad', icon: Users },
-    { id: 'rendimiento', label: 'Rendimiento por Empleado', icon: Award },
-    { id: 'corte', label: 'Corte de Caja Rápido', icon: Wallet },
-    { id: 'catalogo', label: 'Catálogo y Personal', icon: Package },
-    { id: 'historial', label: 'Historial y Conciliación', icon: Calendar },
-    { id: 'pos', label: 'Cobro Mostrador', icon: ShoppingCart },
+    { id: 'corte', label: 'Liquidación por Chofer', icon: Wallet },
+    { id: 'envases', label: 'Control de Envases', icon: RotateCcw },
+    { id: 'corte_general', label: 'Corte General Flotilla', icon: FileCheck },
+    { id: 'catalogo', label: 'Choferes y Precios', icon: Users },
+    { id: 'historial', label: 'Historial de Cortes', icon: Calendar },
+    { id: 'pos', label: 'Venta en Mostrador Planta', icon: Droplets },
   ];
 
-  const items = role === 'admin' ? adminItems : employeeItems;
+  const items = role === 'admin' ? adminItems : driverItems;
 
   return (
     <aside
@@ -74,47 +68,21 @@ export const Sidebar: React.FC<Props> = ({
         {isOpen ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
       </button>
 
-      {/* Area Switcher if employee */}
-      {role === 'empleado' && onChangeArea && isOpen && (
-        <div className="p-3 mx-3 my-3 rounded-2xl bg-slate-50 border border-slate-200">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 px-1">
-            Área de Trabajo Activa:
+      {/* Driver Unit Header if in route */}
+      {role === 'repartidor' && isOpen && (
+        <div className="p-3 mx-3 my-3 rounded-2xl bg-sky-50 border border-sky-100">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-sky-700 mb-0.5">
+            Unidad Asignada:
           </p>
-          <div className="grid grid-cols-2 gap-1 bg-slate-200/60 p-1 rounded-xl">
-            <button
-              onClick={() => onChangeArea('purificadora')}
-              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                currentArea === 'purificadora'
-                  ? 'bg-sky-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Droplet className="w-3 h-3" />
-              <span>Agua</span>
-            </button>
-            <button
-              onClick={() => onChangeArea('tienda')}
-              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                currentArea === 'tienda'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Store className="w-3 h-3" />
-              <span>Tienda</span>
-            </button>
+          <div className="text-xs font-black text-sky-950 truncate flex items-center gap-1.5">
+            <Truck className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+            <span className="truncate">{currentEmployee.assignedVehicleName || 'Camioneta de Reparto'}</span>
           </div>
         </div>
       )}
 
-      {/* Navigation menu items */}
-      <div className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
-        {isOpen && (
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-3 pb-1">
-            {role === 'admin' ? 'Módulos de Gestión' : 'Operación'}
-          </p>
-        )}
-
+      {/* Navigation Items */}
+      <nav className="flex-1 px-3 py-3 space-y-1.5 overflow-y-auto">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -122,59 +90,29 @@ export const Sidebar: React.FC<Props> = ({
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              title={!isOpen ? item.label : undefined}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl font-bold text-xs transition-all text-left ${
                 isActive
-                  ? 'bg-sky-50 text-sky-700 shadow-xs border border-sky-100'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              } ${!isOpen ? 'justify-center px-0' : ''}`}
+                  ? 'bg-sky-600 text-white shadow-sm shadow-sky-600/30'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+              title={!isOpen ? item.label : undefined}
             >
-              <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-sky-600' : 'text-slate-400'}`} />
+              <Icon className="w-5 h-5 shrink-0" />
               {isOpen && <span className="truncate">{item.label}</span>}
             </button>
           );
         })}
-      </div>
+      </nav>
 
-      {/* Bottom User / Session actions */}
-      <div className="p-3 border-t border-slate-100 bg-slate-50/50">
-        {isOpen ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2.5 px-2 py-1">
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0 ${
-                  role === 'admin' ? 'bg-indigo-600' : 'bg-sky-600'
-                }`}
-              >
-                {role === 'admin' ? <ShieldAlert className="w-4 h-4" /> : currentEmployee.name.charAt(0)}
-              </div>
-              <div className="truncate text-left">
-                <div className="text-xs font-bold text-slate-800 truncate">
-                  {currentEmployee.name}
-                </div>
-                <div className="text-[10px] text-slate-500 capitalize">
-                  {role === 'admin' ? 'Administrador' : `Operador (${currentArea})`}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition border border-rose-100"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Cerrar Sesión</span>
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={onLogout}
-            title="Cerrar sesión"
-            className="w-full p-2.5 flex items-center justify-center text-rose-600 hover:bg-rose-50 rounded-xl transition"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-        )}
+      {/* Bottom User info & Logout */}
+      <div className="p-3 border-t border-slate-200">
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl font-bold text-xs text-rose-600 hover:bg-rose-50 transition"
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          {isOpen && <span>Cerrar Sesión</span>}
+        </button>
       </div>
     </aside>
   );

@@ -1,234 +1,323 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Package,
   Users,
+  DollarSign,
+  Truck,
   Plus,
   Trash2,
   Edit2,
   Check,
   X,
-  Droplet,
-  Store,
+  Droplets,
   Key,
-  Clock,
-  Shield,
+  ShieldCheck,
+  RotateCcw,
 } from 'lucide-react';
-import { Product, Employee, Area } from '../../types';
+import { Product, Employee, Vehicle } from '../../types';
 import { StorageService } from '../../services/storage';
 
 export const CatalogAndStaff: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'catalogo' | 'personal'>('catalogo');
+  const [activeTab, setActiveTab] = useState<'precios' | 'choferes' | 'vehiculos'>('precios');
   const [products, setProducts] = useState<Product[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
-  // New product state
-  const [showAddProduct, setShowAddProduct] = useState(false);
-  const [newProductName, setNewProductName] = useState('');
-  const [newProductCategory, setNewProductCategory] = useState<Area>('purificadora');
-  const [newProductPrice, setNewProductPrice] = useState<number | ''>('');
-  const [newProductUnit, setNewProductUnit] = useState('pza');
-  const [newProductEmoji, setNewProductEmoji] = useState('💧');
+  // Add Driver State
+  const [showAddDriver, setShowAddDriver] = useState(false);
+  const [newDriverName, setNewDriverName] = useState('');
+  const [newDriverPin, setNewDriverPin] = useState('');
+  const [newDriverVehicle, setNewDriverVehicle] = useState('Camioneta Nissan #01');
+  const [newDriverPhone, setNewDriverPhone] = useState('');
 
-  // New employee state
-  const [showAddEmployee, setShowAddEmployee] = useState(false);
-  const [newEmpName, setNewEmpName] = useState('');
-  const [newEmpPin, setNewEmpPin] = useState('');
-  const [newEmpArea, setNewEmpArea] = useState<Area>('purificadora');
-  const [newEmpTime, setNewEmpTime] = useState('08:00');
+  // Add Vehicle State
+  const [showAddVehicle, setShowAddVehicle] = useState(false);
+  const [newVehName, setNewVehName] = useState('');
+  const [newVehType, setNewVehType] = useState<Vehicle['type']>('camioneta');
+  const [newVehCapacity, setNewVehCapacity] = useState<number>(40);
+
+  // Edit Product Price State
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [editingPrice, setEditingPrice] = useState<number>(0);
 
   useEffect(() => {
     loadData();
     const handleUpdate = () => loadData();
-    window.addEventListener('purificadora_data_change', handleUpdate);
-    return () => window.removeEventListener('purificadora_data_change', handleUpdate);
+    window.addEventListener('sanmiguel_data_change', handleUpdate);
+    return () => window.removeEventListener('sanmiguel_data_change', handleUpdate);
   }, []);
 
   const loadData = () => {
     setProducts(StorageService.getProducts());
     setEmployees(StorageService.getEmployees());
+    setVehicles(StorageService.getVehicles());
   };
 
-  const handleCreateProduct = (e: React.FormEvent) => {
+  // Drivers handlers
+  const handleCreateDriver = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProductName.trim() || newProductPrice === '') return;
-
-    StorageService.addProduct({
-      name: newProductName.trim(),
-      category: newProductCategory,
-      price: Number(newProductPrice),
-      unit: newProductUnit,
-      emoji: newProductEmoji,
-      isQuickAccess: true,
-    });
-
-    setNewProductName('');
-    setNewProductPrice('');
-    setShowAddProduct(false);
-    loadData();
-  };
-
-  const handleDeleteProduct = (id: string) => {
-    if (confirm('¿Eliminar este producto del catálogo?')) {
-      StorageService.deleteProduct(id);
-      loadData();
-    }
-  };
-
-  const handleCreateEmployee = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEmpName.trim() || newEmpPin.length !== 4) {
-      alert('Por favor ingresa un nombre y un PIN de exactamente 4 dígitos numéricos.');
+    if (!newDriverName.trim() || newDriverPin.length !== 4) {
+      alert('Ingresa el nombre del chofer y un PIN de exactamente 4 dígitos.');
       return;
     }
 
     StorageService.addEmployee({
-      name: newEmpName.trim(),
-      pin: newEmpPin,
-      defaultArea: newEmpArea,
-      scheduledTime: newEmpTime,
-      role: 'empleado',
+      name: newDriverName.trim(),
+      pin: newDriverPin,
+      role: 'repartidor',
+      assignedVehicleName: newDriverVehicle,
+      phone: newDriverPhone.trim() || undefined,
       isActive: true,
-      avatarColor: newEmpArea === 'purificadora' ? 'bg-sky-500' : 'bg-emerald-500',
+      avatarColor: 'bg-sky-500',
     });
 
-    setNewEmpName('');
-    setNewEmpPin('');
-    setShowAddEmployee(false);
+    setNewDriverName('');
+    setNewDriverPin('');
+    setNewDriverPhone('');
+    setShowAddDriver(false);
     loadData();
   };
 
-  const handleDeleteEmployee = (id: string) => {
-    if (confirm('¿Dar de baja a este trabajador?')) {
-      StorageService.deleteEmployee(id);
-      loadData();
-    }
+  const handleToggleDriverStatus = (emp: Employee) => {
+    StorageService.updateEmployee(emp.id, { isActive: !emp.isActive });
+    loadData();
+  };
+
+  // Vehicle handlers
+  const handleCreateVehicle = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVehName.trim() || newVehCapacity <= 0) return;
+
+    StorageService.addVehicle({
+      name: newVehName.trim(),
+      type: newVehType,
+      capacity: newVehCapacity,
+    });
+
+    setNewVehName('');
+    setShowAddVehicle(false);
+    loadData();
+  };
+
+  // Price handlers
+  const handleStartEditPrice = (prod: Product) => {
+    setEditingProductId(prod.id);
+    setEditingPrice(prod.price);
+  };
+
+  const handleSavePrice = (productId: string) => {
+    if (editingPrice <= 0) return;
+    StorageService.updateProduct(productId, { price: Number(editingPrice) });
+    setEditingProductId(null);
+    loadData();
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-2.5 sm:p-6 space-y-4 sm:space-y-6 overflow-hidden">
-      {/* Header with Sub-tabs */}
+    <div className="w-full max-w-5xl mx-auto p-2.5 sm:p-6 space-y-4 sm:space-y-6 overflow-hidden">
+      {/* Header */}
       <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-bold text-sky-600 uppercase tracking-wider">
-            Administración del Sistema
+          <div className="text-xs font-bold text-sky-600 uppercase tracking-wider flex items-center gap-1.5">
+            <Users className="w-4 h-4 text-sky-600" />
+            <span>Configuración del Sistema</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-            Catálogo de Productos y Personal
-          </h2>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+            Gestión de Repartidores, Vehículos y Precios
+          </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Alta, baja y modificación de precios, garrafones, tiendita y claves PIN de trabajadores
+            Alta de choferes, asignación de unidades de reparto y catálogo de precios de agua purificada.
           </p>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
+        {/* Tab switcher buttons */}
+        <div className="flex bg-slate-100 p-1 rounded-2xl shrink-0">
           <button
-            onClick={() => setActiveTab('catalogo')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'catalogo'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+            onClick={() => setActiveTab('precios')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              activeTab === 'precios' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Package className="w-4 h-4 text-sky-600" />
-            <span>Productos ({products.length})</span>
+            Precios Oficiales
           </button>
           <button
-            onClick={() => setActiveTab('personal')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'personal'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+            onClick={() => setActiveTab('choferes')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              activeTab === 'choferes' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Users className="w-4 h-4 text-emerald-600" />
-            <span>Trabajadores ({employees.length})</span>
+            Choferes ({employees.filter(e => e.role === 'repartidor').length})
+          </button>
+          <button
+            onClick={() => setActiveTab('vehiculos')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              activeTab === 'vehiculos' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Unidades ({vehicles.length})
           </button>
         </div>
       </div>
 
-      {/* ===================== TAB 1: PRODUCT CATALOG ===================== */}
-      {activeTab === 'catalogo' && (
+      {/* TAB PRECIOS */}
+      {activeTab === 'precios' && (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-black text-slate-900">
+                Catálogo de Precios de Venta en Campo
+              </h2>
+              <p className="text-xs text-slate-500">
+                Precios que aparecen en los botones exprés de los repartidores.
+              </p>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {products.map((prod) => {
+              const isEditing = editingProductId === prod.id;
+              return (
+                <div key={prod.id} className="py-3.5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-2xl shrink-0">{prod.emoji || '💧'}</span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-black text-slate-900 truncate">
+                        {prod.name}
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        {prod.isBottleIncluded ? 'Incluye envase nuevo' : prod.requiresEmptyReturn ? 'Requiere cambio de envase' : 'Accesorio'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isEditing ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-slate-500">$</span>
+                        <input
+                          type="number"
+                          value={editingPrice}
+                          onChange={(e) => setEditingPrice(Number(e.target.value))}
+                          className="w-20 h-9 px-2 text-center font-black text-base border border-sky-400 rounded-xl focus:ring-2 focus:ring-sky-500"
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSavePrice(prod.id)}
+                          className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
+                          title="Guardar precio"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingProductId(null)}
+                          className="p-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-black text-sky-800">
+                          ${prod.price.toFixed(2)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditPrice(prod)}
+                          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
+                          title="Modificar precio"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB CHOFERES */}
+      {activeTab === 'choferes' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-              Productos y Precios Registrados
-            </h3>
+            <h2 className="text-base font-black text-slate-900">
+              Personal de Reparto y Choferes
+            </h2>
             <button
-              onClick={() => setShowAddProduct(!showAddProduct)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs transition"
+              onClick={() => setShowAddDriver(!showAddDriver)}
+              className="px-3 py-2 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              <span>Nuevo Producto</span>
+              <span>Alta de Repartidor</span>
             </button>
           </div>
 
-          {/* New Product Form */}
-          {showAddProduct && (
-            <form
-              onSubmit={handleCreateProduct}
-              className="bg-white p-5 rounded-3xl border border-sky-300 shadow-sm space-y-4 animate-in fade-in"
-            >
-              <div className="font-bold text-sm text-slate-900">
-                Registrar Nuevo Producto en Catálogo
-              </div>
+          {/* Formulario de Alta de Chofer */}
+          {showAddDriver && (
+            <form onSubmit={handleCreateDriver} className="bg-white p-5 rounded-3xl border border-sky-200 shadow-sm space-y-3">
+              <h3 className="text-xs font-bold text-sky-700 uppercase tracking-wider">
+                Registrar Nuevo Chofer
+              </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Nombre del Producto:
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    Nombre Completo:
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Ej. Garrafón 20L Premium"
-                    value={newProductName}
-                    onChange={(e) => setNewProductName(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                    placeholder="Ej. Pedro Gómez"
+                    value={newDriverName}
+                    onChange={(e) => setNewDriverName(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Categoría / Área:
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    PIN Corto de Acceso (4 dígitos):
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={4}
+                    required
+                    placeholder="Ej. 5678"
+                    value={newDriverPin}
+                    onChange={(e) => setNewDriverPin(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl font-mono tracking-widest focus:ring-2 focus:ring-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    Unidad Asignada:
                   </label>
                   <select
-                    value={newProductCategory}
-                    onChange={(e) => setNewProductCategory(e.target.value as Area)}
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden"
+                    value={newDriverVehicle}
+                    onChange={(e) => setNewDriverVehicle(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500"
                   >
-                    <option value="purificadora">Purificadora (Agua)</option>
-                    <option value="tienda">Tienda (Abarrotes)</option>
+                    {vehicles.map((v) => (
+                      <option key={v.id} value={v.name}>
+                        {v.name} ({v.capacity} garrafones)
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Precio de Venta ($):
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    Teléfono Celular:
                   </label>
                   <input
-                    type="number"
-                    step="0.5"
-                    required
-                    placeholder="0.00"
-                    value={newProductPrice}
-                    onChange={(e) =>
-                      setNewProductPrice(e.target.value === '' ? '' : Number(e.target.value))
-                    }
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Emoji / Ícono rápido:
-                  </label>
-                  <input
-                    type="text"
-                    value={newProductEmoji}
-                    onChange={(e) => setNewProductEmoji(e.target.value)}
-                    placeholder="💧, 🪣, 🥤, 🧊"
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden"
+                    type="tel"
+                    placeholder="Ej. 55 1234 5678"
+                    value={newDriverPhone}
+                    onChange={(e) => setNewDriverPhone(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
               </div>
@@ -236,8 +325,8 @@ export const CatalogAndStaff: React.FC = () => {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddProduct(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold"
+                  onClick={() => setShowAddDriver(false)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
                   Cancelar
                 </button>
@@ -245,222 +334,150 @@ export const CatalogAndStaff: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-xs"
                 >
-                  Guardar Producto
+                  Guardar Chofer
                 </button>
               </div>
             </form>
           )}
 
-          {/* Products Table */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="divide-y divide-slate-100">
-              {products.map((prod) => (
-                <div
-                  key={prod.id}
-                  className="p-4 hover:bg-slate-50 transition flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{prod.emoji || '📦'}</span>
-                    <div>
-                      <div className="font-extrabold text-sm text-slate-900">
-                        {prod.name}
+          {/* Lista de Choferes */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {employees.map((emp) => {
+              const isRepartidor = emp.role === 'repartidor';
+              return (
+                <div key={emp.id} className="bg-white p-4 rounded-3xl border border-slate-200 shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 font-black text-sm flex items-center justify-center">
+                        {emp.name.charAt(0)}
                       </div>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
-                        <span
-                          className={`font-bold uppercase ${
-                            prod.category === 'purificadora'
-                              ? 'text-sky-600'
-                              : 'text-emerald-600'
-                          }`}
-                        >
-                          {prod.category}
-                        </span>
-                        <span>•</span>
-                        <span>Unidad: {prod.unit}</span>
+                      <div>
+                        <h3 className="text-xs font-black text-slate-900">{emp.name}</h3>
+                        <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                          <Truck className="w-3 h-3 text-slate-400" />
+                          <span>{emp.assignedVehicleName || 'Sin unidad fija'}</span>
+                        </p>
                       </div>
                     </div>
+
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      emp.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {emp.isActive ? 'Activo' : 'Inactivo'}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-base font-black text-slate-900">
-                        ${prod.price.toFixed(2)}
-                      </div>
-                      <span className="text-[10px] text-slate-400">precio mostrador</span>
-                    </div>
-
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-600">
+                    <span className="font-mono">PIN: <strong>••••</strong> ({emp.pin})</span>
                     <button
-                      onClick={() => handleDeleteProduct(prod.id)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                      title="Eliminar producto"
+                      type="button"
+                      onClick={() => handleToggleDriverStatus(emp)}
+                      className="text-xs text-sky-600 hover:text-sky-800 font-semibold"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      {emp.isActive ? 'Desactivar' : 'Reactivar'}
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* ===================== TAB 2: STAFF & PIN MANAGEMENT ===================== */}
-      {activeTab === 'personal' && (
+      {/* TAB VEHICULOS */}
+      {activeTab === 'vehiculos' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-              Cuentas de Trabajadores y Claves PIN
-            </h3>
+            <h2 className="text-base font-black text-slate-900">
+              Unidades y Vehículos de Reparto
+            </h2>
             <button
-              onClick={() => setShowAddEmployee(!showAddEmployee)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition"
+              onClick={() => setShowAddVehicle(!showAddVehicle)}
+              className="px-3 py-2 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              <span>Alta de Trabajador</span>
+              <span>Alta de Unidad</span>
             </button>
           </div>
 
-          {/* New Employee Form */}
-          {showAddEmployee && (
-            <form
-              onSubmit={handleCreateEmployee}
-              className="bg-white p-5 rounded-3xl border border-emerald-300 shadow-sm space-y-4 animate-in fade-in"
-            >
-              <div className="font-bold text-sm text-slate-900">
-                Crear Nueva Cuenta de Trabajador
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          {showAddVehicle && (
+            <form onSubmit={handleCreateVehicle} className="bg-white p-5 rounded-3xl border border-sky-200 shadow-sm space-y-3">
+              <h3 className="text-xs font-bold text-sky-700 uppercase tracking-wider">
+                Registrar Unidad de Reparto
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Nombre Completo:
-                  </label>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Nombre:</label>
                   <input
                     type="text"
                     required
-                    placeholder="Ej. Pedro Ramírez"
-                    value={newEmpName}
-                    onChange={(e) => setNewEmpName(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    placeholder="Ej. Camioneta Chevrolet #04"
+                    value={newVehName}
+                    onChange={(e) => setNewVehName(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl"
                   />
                 </div>
-
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    PIN Corto (4 Dígitos):
-                  </label>
-                  <input
-                    type="password"
-                    maxLength={4}
-                    inputMode="numeric"
-                    required
-                    placeholder="Ej. 4567"
-                    value={newEmpPin}
-                    onChange={(e) => setNewEmpPin(e.target.value.replace(/\D/g, ''))}
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 font-mono tracking-widest text-center focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Área Habitual:
-                  </label>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Tipo:</label>
                   <select
-                    value={newEmpArea}
-                    onChange={(e) => setNewEmpArea(e.target.value as Area)}
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden"
+                    value={newVehType}
+                    onChange={(e) => setNewVehType(e.target.value as any)}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl"
                   >
-                    <option value="purificadora">Purificadora (Agua)</option>
-                    <option value="tienda">Tienda (Abarrotes)</option>
+                    <option value="camioneta">Camioneta</option>
+                    <option value="triciclo">Triciclo</option>
+                    <option value="motocarro">Moto-carro</option>
+                    <option value="otro">Otro</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Horario de Entrada Programado:
-                  </label>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Capacidad Máxima:</label>
                   <input
-                    type="time"
-                    value={newEmpTime}
-                    onChange={(e) => setNewEmpTime(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-hidden"
+                    type="number"
+                    min={1}
+                    required
+                    value={newVehCapacity}
+                    onChange={(e) => setNewVehCapacity(Number(e.target.value))}
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl"
                   />
                 </div>
               </div>
-
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddEmployee(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold"
+                  onClick={() => setShowAddVehicle(false)}
+                  className="px-3.5 py-2 rounded-xl text-xs text-slate-600 hover:bg-slate-100"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold"
                 >
-                  Guardar Trabajador
+                  Guardar Unidad
                 </button>
               </div>
             </form>
           )}
 
-          {/* Employees List */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="divide-y divide-slate-100">
-              {employees.map((emp) => (
-                <div
-                  key={emp.id}
-                  className="p-4 sm:p-5 hover:bg-slate-50 transition flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div
-                      className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-white text-sm shadow-xs ${
-                        emp.avatarColor || 'bg-sky-600'
-                      }`}
-                    >
-                      {emp.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-sm text-slate-900">
-                          {emp.name}
-                        </span>
-                        {emp.role === 'admin' ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-                            Patrón / Admin
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 uppercase">
-                            {emp.defaultArea}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 font-mono text-slate-700">
-                          <Key className="w-3 h-3 text-amber-500" /> PIN: •••• ({emp.pin})
-                        </span>
-                        <span>•</span>
-                        <span>Turno habitual: {emp.scheduledTime || '08:00 AM'}</span>
-                      </div>
-                    </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {vehicles.map((v) => (
+              <div key={v.id} className="bg-white p-4 rounded-3xl border border-slate-200 shadow-2xs space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-sky-50 text-sky-600">
+                    <Truck className="w-5 h-5" />
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    {emp.role !== 'admin' && (
-                      <button
-                        onClick={() => handleDeleteEmployee(emp.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                        title="Dar de baja trabajador"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900">{v.name}</h3>
+                    <p className="text-[10px] text-slate-500 uppercase">{v.type}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="pt-2 text-xs text-slate-600 flex justify-between border-t border-slate-100">
+                  <span>Capacidad de Carga:</span>
+                  <strong className="text-sky-800">{v.capacity} garrafones</strong>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

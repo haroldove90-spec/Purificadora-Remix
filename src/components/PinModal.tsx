@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { X, Delete, Lock, UserCheck, AlertCircle } from 'lucide-react';
-import { Employee, Area } from '../types';
+import { X, Delete, Lock, UserCheck, AlertCircle, Truck, ShieldCheck } from 'lucide-react';
+import { Employee } from '../types';
 import { StorageService } from '../services/storage';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  targetRoleType: 'purificadora' | 'tienda' | 'checador' | 'admin';
+  targetRoleType: 'repartidor' | 'admin' | 'checador' | 'mostrador';
   roleTitle: string;
-  onSuccess: (employee: Employee, area: Area, navigateTo?: string) => void;
+  onSuccess: (employee: Employee, navigateTo?: string) => void;
 }
 
 export const PinModal: React.FC<Props> = ({
@@ -24,12 +24,15 @@ export const PinModal: React.FC<Props> = ({
 
   if (!isOpen) return null;
 
-  const employees = StorageService.getEmployees().filter(e => e.isActive);
+  const employees = StorageService.getEmployees().filter((e) => e.isActive);
 
-  // Filter relevant employees if needed, but allow all active
-  const relevantEmployees = targetRoleType === 'admin'
-    ? employees.filter(e => e.role === 'admin')
-    : employees;
+  // Filter relevant employees
+  const relevantEmployees =
+    targetRoleType === 'admin'
+      ? employees.filter((e) => e.role === 'admin')
+      : targetRoleType === 'repartidor'
+      ? employees.filter((e) => e.role === 'repartidor')
+      : employees;
 
   const handleKeyPress = (num: string) => {
     if (pin.length < 4) {
@@ -43,7 +46,7 @@ export const PinModal: React.FC<Props> = ({
   };
 
   const handleDelete = () => {
-    setPin(prev => prev.slice(0, -1));
+    setPin((prev) => prev.slice(0, -1));
     setError(null);
   };
 
@@ -53,16 +56,14 @@ export const PinModal: React.FC<Props> = ({
   };
 
   const verifyPin = (pinToTest: string) => {
-    // If an employee was pre-selected
     let emp: Employee | undefined;
     if (selectedEmpId) {
-      emp = employees.find(e => e.id === selectedEmpId && e.pin === pinToTest);
+      emp = employees.find((e) => e.id === selectedEmpId && e.pin === pinToTest);
     } else {
-      // Find employee that matches this PIN and role requirement
       if (targetRoleType === 'admin') {
-        emp = employees.find(e => e.role === 'admin' && e.pin === pinToTest);
+        emp = employees.find((e) => e.role === 'admin' && e.pin === pinToTest);
       } else {
-        emp = employees.find(e => e.pin === pinToTest);
+        emp = employees.find((e) => e.pin === pinToTest);
       }
     }
 
@@ -72,14 +73,14 @@ export const PinModal: React.FC<Props> = ({
       return;
     }
 
-    // Determine target area
-    let targetArea: Area = emp.defaultArea;
-    if (targetRoleType === 'purificadora') targetArea = 'purificadora';
-    if (targetRoleType === 'tienda') targetArea = 'tienda';
+    const targetView =
+      targetRoleType === 'checador'
+        ? 'checador'
+        : targetRoleType === 'admin'
+        ? 'monitoreo'
+        : 'pos';
 
-    const targetView = targetRoleType === 'checador' ? 'checador' : undefined;
-
-    onSuccess(emp, targetArea, targetView);
+    onSuccess(emp, targetView);
   };
 
   const quickFillEmployee = (e: Employee) => {
@@ -87,11 +88,13 @@ export const PinModal: React.FC<Props> = ({
     setPin(e.pin);
     setError(null);
     setTimeout(() => {
-      let targetArea: Area = e.defaultArea;
-      if (targetRoleType === 'purificadora') targetArea = 'purificadora';
-      if (targetRoleType === 'tienda') targetArea = 'tienda';
-      const targetView = targetRoleType === 'checador' ? 'checador' : undefined;
-      onSuccess(e, targetArea, targetView);
+      const targetView =
+        targetRoleType === 'checador'
+          ? 'checador'
+          : e.role === 'admin'
+          ? 'monitoreo'
+          : 'pos';
+      onSuccess(e, targetView);
     }, 200);
   };
 
@@ -110,21 +113,19 @@ export const PinModal: React.FC<Props> = ({
           <div className="mx-auto w-12 h-12 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center mb-2 shadow-inner">
             <Lock className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900">
-            {roleTitle}
-          </h2>
+          <h2 className="text-lg font-bold text-slate-900">{roleTitle}</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Ingresa tu clave corta de 4 dígitos
+            Ingresa tu clave corta personal (PIN de 4 dígitos)
           </p>
         </div>
 
-        {/* Employee quick selector tabs if multiple */}
+        {/* Quick select tabs */}
         <div className="mt-3 mb-2">
           <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-1.5">
-            Acceso rápido por trabajador:
+            Acceso rápido por chofer / encargado:
           </p>
           <div className="flex flex-wrap justify-center gap-1.5">
-            {relevantEmployees.map(emp => (
+            {relevantEmployees.map((emp) => (
               <button
                 key={emp.id}
                 type="button"
@@ -144,7 +145,7 @@ export const PinModal: React.FC<Props> = ({
 
         {/* PIN Dots Display */}
         <div className="flex justify-center items-center gap-4 my-3">
-          {[0, 1, 2, 3].map(i => {
+          {[0, 1, 2, 3].map((i) => {
             const filled = pin.length > i;
             return (
               <div
@@ -169,7 +170,7 @@ export const PinModal: React.FC<Props> = ({
 
         {/* Numeric Tactile Keypad */}
         <div className="grid grid-cols-3 gap-2.5 my-2">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
             <button
               key={n}
               type="button"

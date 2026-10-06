@@ -1,6 +1,6 @@
 {
   "name": "Purificadora remix",
-  "description": "Sistema integral de punto de venta, reloj checador y administración para purificadora de agua",
+  "description": "Sistema de reparto en campo, control de garrafones y liquidación para Agua San Miguel",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

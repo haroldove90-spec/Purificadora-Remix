@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-  ShoppingCart,
+  Droplets,
+  Truck,
   Clock,
-  Receipt,
   TrendingUp,
-  Users,
-  Award,
   Wallet,
-  Package,
+  RotateCcw,
+  FileCheck,
+  Users,
   Calendar,
 } from 'lucide-react';
 import { Role } from '../types';
@@ -19,26 +19,26 @@ interface Props {
 }
 
 export const BottomNav: React.FC<Props> = ({ role, activeTab, onTabChange }) => {
-  const employeeItems = [
-    { id: 'pos', label: 'Cobro Exprés', icon: ShoppingCart },
+  const driverItems = [
+    { id: 'pos', label: 'Cobro Ruta', icon: Droplets },
+    { id: 'mis_ventas', label: 'Mi Unidad', icon: Truck },
     { id: 'checador', label: 'Checador', icon: Clock },
-    { id: 'mis_ventas', label: 'Mis Cobros', icon: Receipt },
   ];
 
   const adminItems = [
     { id: 'monitoreo', label: 'En Vivo', icon: TrendingUp },
-    { id: 'asistencia', label: 'Personal', icon: Users },
-    { id: 'corte', label: 'Corte Caja', icon: Wallet },
-    { id: 'rendimiento', label: 'Rendimiento', icon: Award },
-    { id: 'catalogo', label: 'Catálogo', icon: Package },
+    { id: 'corte', label: 'Liquidar', icon: Wallet },
+    { id: 'envases', label: 'Envases', icon: RotateCcw },
+    { id: 'corte_general', label: 'Corte Día', icon: FileCheck },
+    { id: 'catalogo', label: 'Precios', icon: Users },
     { id: 'historial', label: 'Historial', icon: Calendar },
   ];
 
-  const items = role === 'admin' ? adminItems : employeeItems;
+  const items = role === 'admin' ? adminItems : driverItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg md:hidden">
-      <div className="flex items-center justify-around px-1 py-1.5 max-w-lg mx-auto">
+      <div className="flex items-center justify-around px-1 py-1 max-w-lg mx-auto">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;

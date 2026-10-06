@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { Droplets, Store, Clock, ShieldCheck, Download } from 'lucide-react';
+import { Truck, ShieldCheck, Clock, Droplets } from 'lucide-react';
 import { PinModal } from './PinModal';
-import { Employee, Area } from '../types';
+import { Employee } from '../types';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface Props {
-  onSelectRole: (employee: Employee, area: Area, navigateTo?: string) => void;
+  onSelectRole: (employee: Employee, navigateTo?: string) => void;
 }
 
 interface RoleCardItem {
-  id: 'purificadora' | 'tienda' | 'checador' | 'admin';
+  id: 'repartidor' | 'admin' | 'checador' | 'mostrador';
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   accentColor: string;
@@ -18,25 +18,11 @@ interface RoleCardItem {
 
 const ROLES: RoleCardItem[] = [
   {
-    id: 'purificadora',
-    name: 'Purificadora',
-    icon: Droplets,
+    id: 'repartidor',
+    name: 'Repartidor / Chofer',
+    icon: Truck,
     accentColor: 'text-sky-600 group-hover:text-sky-700',
     badgeBg: 'bg-sky-50 text-sky-600 border-sky-100 group-hover:bg-sky-100/80',
-  },
-  {
-    id: 'tienda',
-    name: 'Tienda / Abarrotes',
-    icon: Store,
-    accentColor: 'text-emerald-600 group-hover:text-emerald-700',
-    badgeBg: 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-100/80',
-  },
-  {
-    id: 'checador',
-    name: 'Reloj Checador',
-    icon: Clock,
-    accentColor: 'text-amber-600 group-hover:text-amber-700',
-    badgeBg: 'bg-amber-50 text-amber-600 border-amber-100 group-hover:bg-amber-100/80',
   },
   {
     id: 'admin',
@@ -44,6 +30,20 @@ const ROLES: RoleCardItem[] = [
     icon: ShieldCheck,
     accentColor: 'text-indigo-600 group-hover:text-indigo-700',
     badgeBg: 'bg-indigo-50 text-indigo-600 border-indigo-100 group-hover:bg-indigo-100/80',
+  },
+  {
+    id: 'mostrador',
+    name: 'Venta en Planta',
+    icon: Droplets,
+    accentColor: 'text-teal-600 group-hover:text-teal-700',
+    badgeBg: 'bg-teal-50 text-teal-600 border-teal-100 group-hover:bg-teal-100/80',
+  },
+  {
+    id: 'checador',
+    name: 'Reloj Checador',
+    icon: Clock,
+    accentColor: 'text-amber-600 group-hover:text-amber-700',
+    badgeBg: 'bg-amber-50 text-amber-600 border-amber-100 group-hover:bg-amber-100/80',
   },
 ];
 
@@ -58,9 +58,9 @@ export const RoleSelector: React.FC<Props> = ({ onSelectRole }) => {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4 py-8 sm:px-6 lg:px-8">
       {/* Top utility row with PWA installer */}
       <div className="w-full max-w-5xl flex justify-between items-center mb-8 px-2">
-        <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          Purificadora y abarrotes
+        <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-wider">
+          <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse" />
+          <span>Agua San Miguel · Reparto y Planta</span>
         </div>
         <PWAInstallButton />
       </div>
@@ -82,7 +82,6 @@ export const RoleSelector: React.FC<Props> = ({ onSelectRole }) => {
                 >
                   <Icon className={`w-8 h-8 sm:w-9 sm:h-9 ${role.accentColor}`} />
                 </div>
-                {/* STRICT REQUIREMENT: "Sin header, sin descripciones, solo nombre del rol" */}
                 <span className="text-base sm:text-lg font-bold text-slate-800 group-hover:text-sky-700 transition-colors tracking-tight leading-snug">
                   {role.name}
                 </span>
@@ -99,9 +98,9 @@ export const RoleSelector: React.FC<Props> = ({ onSelectRole }) => {
           onClose={() => setActiveModalRole(null)}
           targetRoleType={activeModalRole.id}
           roleTitle={activeModalRole.name}
-          onSuccess={(employee, area, navigateTo) => {
+          onSuccess={(employee, navigateTo) => {
             setActiveModalRole(null);
-            onSelectRole(employee, area, navigateTo);
+            onSelectRole(employee, navigateTo);
           }}
         />
       )}
