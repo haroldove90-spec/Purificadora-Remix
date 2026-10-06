@@ -1,0 +1,8 @@
+{
+  "name": "Purificadora remix",
+  "description": "Sistema integral de punto de venta, reloj checador y administración para purificadora de agua",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@layer base {
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  body {
+    touch-action: manipulation;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Print styling for receipts and cash cuts */
+@media print {
+  header, nav, aside, button, .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}

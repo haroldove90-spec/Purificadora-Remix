@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f9ff" />
+      <stop offset="100%" stop-color="#e0f2fe" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0369a1" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background container with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect width="512" height="512" rx="112" fill="none" stroke="#bae6fd" stroke-width="8"/>
+
+  <!-- Main Water Droplet Shape with shadow -->
+  <path d="M 256 64 C 256 64 128 220 128 320 C 128 390 185 448 256 448 C 327 448 384 390 384 320 C 384 220 256 64 256 64 Z" 
+        fill="url(#waterGrad)" filter="url(#shadow)" />
+
+  <!-- Inner droplet water reflection highlight -->
+  <path d="M 220 140 C 220 140 160 250 160 320 C 160 345 170 370 186 390 C 172 370 164 345 164 320 C 164 240 220 140 220 140 Z" 
+        fill="#ffffff" opacity="0.45" />
+
+  <!-- Water ripple rings inside -->
+  <ellipse cx="256" cy="350" rx="60" ry="24" fill="none" stroke="#ffffff" stroke-width="6" opacity="0.6"/>
+  <ellipse cx="256" cy="350" rx="90" ry="36" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.35"/>
+
+  <!-- Grocery / Abarrotes shopping basket badge -->
+  <g transform="translate(290, 280)">
+    <circle cx="70" cy="70" r="66" fill="url(#emeraldGrad)" stroke="#ffffff" stroke-width="8" filter="url(#shadow)"/>
+    <!-- Basket icon inside -->
+    <path d="M 44 65 L 96 65 L 88 95 L 52 95 Z" fill="#ffffff" />
+    <path d="M 40 60 L 100 60" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 52 60 L 65 42 C 67 39 73 39 75 42 L 88 60" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+    <line x1="60" y1="72" x2="60" y2="88" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+    <line x1="70" y1="72" x2="70" y2="88" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+    <line x1="80" y1="72" x2="80" y2="88" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>
