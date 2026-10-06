@@ -14,9 +14,9 @@ export default defineConfig(() => {
         includeAssets: ['icon.svg', 'apple-touch-icon.png'],
         manifest: {
           id: '/',
-          name: 'Purificadora y abarrotes',
-          short_name: 'Purificadora',
-          description: 'Punto de cobro exprés, reloj checador y administración para purificadora y abarrotes.',
+          name: 'Agua San Miguel',
+          short_name: 'Agua San Miguel',
+          description: 'Punto de cobro exprés en ruta, control de envases y liquidación para Agua San Miguel.',
           theme_color: '#0284c7',
           background_color: '#f8fafc',
           display: 'standalone',
